@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Rol {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User[]
+}
+
+model User {
+  id             Int           @id @default(autoincrement())
+  name           String
+  email          String        @unique
+  password       String
+  imageSecureUrl String
+  imagePublicId  String
+  phone          String?       @unique
+  address        String?
+  tokenMovil     String?
+  rolId          Int
+  rol            Rol           @relation(fields: [rolId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  history        History[]
+  organizer      Organizer?
+  photographer   Photographer?
+  client         Client?
+}
+
+// Bitacora
+model History {
+  id          Int      @id @default(autoincrement())
+  action      String
+  description String
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Organizer {
+  id        Int      @id @default(autoincrement())
+  webSite   String?
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  events    Event[]
+}
+
+enum PhotographerType {
+  person
+  studio
+}
+
+model Photographer {
+  id                Int                 @id @default(autoincrement())
+  type              PhotographerType //El fotografo es una person o un studio
+  specialty         String? // bodas , retratos, paisajes, graduaciones, etc
+  portfolio         String? // web site
+  experince         Int? // experiencia en years
+  rate              Int // tarifa (de cuanto cobra)
+  userId            Int                 @unique
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  eventPhotographer EventPhotographer[]
+  photos            Photo[]
+}
+
+model Client {
+  id          Int           @id @default(autoincrement())
+  userId      Int           @unique
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  photoSale   PhotoSale[]
+  eventClient EventClient[]
+}
+
+model Event {
+  id                Int                 @id @default(autoincrement())
+  title             String
+  description       String
+  dateTime          DateTime
+  location          String
+  qr                String
+  organizerId       Int
+  organizer         Organizer           @relation(fields: [organizerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  eventPhotographer EventPhotographer[]
+  photos            Photo[]
+  invitation        Invitation[]
+  eventClient       EventClient[]
+}
+
+model Invitation {
+  id        Int      @id @default(autoincrement())
+  email     String
+  evenId    Int
+  event     Event    @relation(fields: [evenId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Photo {
+  id             Int          @id @default(autoincrement())
+  imageUrl       String
+  imageUrlCopy   String
+  price          Int
+  isPublic       Boolean // public or private
+  eventId        Int
+  photographerId Int
+  event          Event        @relation(fields: [eventId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  photographer   Photographer @relation(fields: [photographerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  photoSale      PhotoSale[]
+}
+
+model EventPhotographer {
+  id             Int           @id @default(autoincrement())
+  eventId        Int
+  photographerId Int
+  event          Event         @relation(fields: [eventId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  photographer   Photographer? @relation(fields: [photographerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model EventClient {
+  id        Int      @id @default(autoincrement())
+  eventId   Int
+  clientId  Int
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum StatePhotoSale {
+  paid
+  unpaid
+}
+
+enum TypePhotoSale {
+  digital
+  physical
+}
+
+model PhotoSale {
+  id              Int            @id @default(autoincrement())
+  total           Decimal
+  dateTime        DateTime
+  methodOfPayment String
+  state           StatePhotoSale
+  type            TypePhotoSale
+  clientId        Int
+  photoId         Int
+  client          Client         @relation(fields: [clientId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  photo           Photo          @relation(fields: [photoId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
