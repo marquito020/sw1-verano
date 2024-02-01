@@ -21,4 +21,4 @@ export enum PrivateRoutes {
   INVITATION = "/invitation",
 }
 
-export const baseUrl = "http://192.168.113.248:3000/";
+export const baseUrl = "http://18.119.101.175:3000/";
